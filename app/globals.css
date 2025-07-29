@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Force English for date inputs - More aggressive approach */
+input[type="date"] {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  direction: ltr !important;
+  writing-mode: horizontal-tb !important;
+  text-align: left !important;
+}
+
+/* Override webkit date picker text */
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  direction: ltr !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #6b7280;
+  direction: ltr !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field {
+  direction: ltr !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Force calendar picker to be English */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  direction: ltr !important;
+}
+
+/* Force English locale for all date/time elements */
+:lang(zh), :lang(zh-CN), :lang(zh-TW) {
+  direction: ltr !important;
+}
+
+/* Hide Chinese characters if any */
+input[type="date"]:lang(zh)::-webkit-datetime-edit-text {
+  display: none !important;
+}
+
+input[type="date"]:lang(zh-CN)::-webkit-datetime-edit-text {
+  display: none !important;
+}
+
+input[type="date"]:lang(zh-TW)::-webkit-datetime-edit-text {
+  display: none !important;
+}
+
+/* Custom class for forcing English dates */
+.force-english-date {
+  direction: ltr !important;
+  writing-mode: horizontal-tb !important;
+  text-align: left !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.force-english-date::-webkit-datetime-edit {
+  direction: ltr !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.force-english-date::-webkit-datetime-edit-fields-wrapper {
+  direction: ltr !important;
+}
+
+.force-english-date::-webkit-datetime-edit-text {
+  direction: ltr !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none;
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.slide-up {
+  animation: slide-up 0.3s ease-out;
+} 
