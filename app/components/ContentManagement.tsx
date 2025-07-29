@@ -669,28 +669,6 @@ export default function ContentManagement() {
     alert('🔄 Filters applied successfully!')
   }
 
-  const handleResetFilters = () => {
-    setSearchValue('')
-    setSearchType('username')
-    setDateFrom('')
-    setDateTo('')
-    setMinLikes('')
-    setMinComments('')
-    setMinRemixes('')
-    setFilterContentType('all')
-    setAppliedFilters({
-      searchQuery: '',
-      searchType: 'username' as 'username' | 'post_id' | 'audio_id' | 'edit_look_id' | 'remix_id',
-      dateFrom: '',
-      dateTo: '',
-      minLikes: '',
-      minComments: '',
-      minRemixes: '',
-      contentType: 'all'
-    })
-    alert('🗑️ Filters reset successfully!')
-  }
-
   const filteredAndSortedPosts = posts
     .filter(post => {
       // Search functionality using applied filters
@@ -909,9 +887,15 @@ export default function ContentManagement() {
               />
               <button
                 onClick={handleSearch}
-                className="px-6 py-3 bg-primary-600 text-white hover:bg-primary-700 transition-colors text-sm font-medium rounded-r-lg"
+                className="px-6 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-sm font-medium border-r border-gray-300"
               >
                 Search
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="px-6 py-3 bg-primary-600 text-white hover:bg-primary-700 transition-colors text-sm font-medium rounded-r-lg"
+              >
+                🔄 Apply Filters
               </button>
             </div>
           </div>
@@ -1028,21 +1012,7 @@ export default function ContentManagement() {
           </div>
         </div>
 
-        {/* Apply and Reset Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleApplyFilters}
-            className="flex-1 bg-primary-600 text-white px-4 py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm flex items-center justify-center gap-2"
-          >
-            🔄 Apply Filters
-          </button>
-          <button
-            onClick={handleResetFilters}
-            className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
-          >
-            🗑️ Reset Filters
-          </button>
-        </div>
+
       </div>
 
       {/* Content Header with Sort Control */}
