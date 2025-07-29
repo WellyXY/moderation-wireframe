@@ -650,6 +650,15 @@ export default function ContentManagement() {
     contentType: 'waiting_for_review'
   })
 
+  // Date validation helper
+  const isValidDate = (dateString: string) => {
+    if (!dateString) return true // Empty is valid
+    const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!match) return false
+    const date = new Date(dateString)
+    return !isNaN(date.getTime())
+  }
+
   const handleSearch = () => {
     setActiveSearchValue(searchValue)
     setActiveSearchType(searchType)
@@ -713,8 +722,24 @@ export default function ContentManagement() {
       // Date range filtering using applied filters
       const matchesDateRange = (() => {
         const postDate = post.boostedAt || post.createdAt
-        if (appliedFilters.dateFrom && new Date(appliedFilters.dateFrom) > postDate) return false
-        if (appliedFilters.dateTo && new Date(appliedFilters.dateTo) < postDate) return false
+        
+        // Validate and parse date inputs (YYYY-MM-DD format)
+        if (appliedFilters.dateFrom) {
+          const dateFromMatch = appliedFilters.dateFrom.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+          if (dateFromMatch) {
+            const fromDate = new Date(appliedFilters.dateFrom)
+            if (!isNaN(fromDate.getTime()) && fromDate > postDate) return false
+          }
+        }
+        
+        if (appliedFilters.dateTo) {
+          const dateToMatch = appliedFilters.dateTo.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+          if (dateToMatch) {
+            const toDate = new Date(appliedFilters.dateTo + 'T23:59:59') // End of day
+            if (!isNaN(toDate.getTime()) && toDate < postDate) return false
+          }
+        }
+        
         return true
       })()
 
@@ -910,46 +935,42 @@ export default function ContentManagement() {
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">From Date</label>
             <input
-              type="date"
+              type="text"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              lang="en-US"
-              dir="ltr"
-              data-locale="en-US"
-              data-date-format="yyyy-mm-dd"
-              placeholder="yyyy-mm-dd"
-              title="Select start date"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm force-english-date"
-              style={{ 
-                colorScheme: 'light',
-                direction: 'ltr',
-                writingMode: 'horizontal-tb',
-                fontFamily: 'system-ui, sans-serif'
-              }}
+              placeholder="YYYY-MM-DD (e.g., 2024-01-15)"
+              pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm ${
+                dateFrom && !isValidDate(dateFrom) 
+                  ? 'border-red-300 focus:ring-red-500' 
+                  : 'border-gray-300 focus:ring-primary-500'
+              }`}
+              title="Enter date in YYYY-MM-DD format (e.g., 2024-01-15)"
             />
+            {dateFrom && !isValidDate(dateFrom) && (
+              <p className="text-red-500 text-xs mt-1">Please enter a valid date in YYYY-MM-DD format</p>
+            )}
           </div>
           
           {/* Date To */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">To Date</label>
             <input
-              type="date"
+              type="text"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              lang="en-US"
-              dir="ltr"
-              data-locale="en-US"
-              data-date-format="yyyy-mm-dd"
-              placeholder="yyyy-mm-dd"
-              title="Select end date"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm force-english-date"
-              style={{ 
-                colorScheme: 'light',
-                direction: 'ltr',
-                writingMode: 'horizontal-tb',
-                fontFamily: 'system-ui, sans-serif'
-              }}
+              placeholder="YYYY-MM-DD (e.g., 2024-01-15)"
+              pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent outline-none text-sm ${
+                dateTo && !isValidDate(dateTo) 
+                  ? 'border-red-300 focus:ring-red-500' 
+                  : 'border-gray-300 focus:ring-primary-500'
+              }`}
+              title="Enter date in YYYY-MM-DD format (e.g., 2024-01-15)"
             />
+            {dateTo && !isValidDate(dateTo) && (
+              <p className="text-red-500 text-xs mt-1">Please enter a valid date in YYYY-MM-DD format</p>
+            )}
           </div>
         </div>
       </div>
