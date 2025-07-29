@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
-    domains: ['example.com', 'placeholder.com'],
+    domains: ['commondatastorage.googleapis.com'],
   },
+  // Removed experimental.appDir as it's no longer needed in Next.js 14
 }
 
 module.exports = nextConfig 

@@ -1,122 +1,168 @@
 # Content Moderation Dashboard
 
-A modern video content moderation and recommendation algorithm testing system built with Next.js 14 and React 18.
+一个现代化的内容审核管理后台，基于Next.js 14 + React 18 + TypeScript + Tailwind CSS构建。
 
-## Features
+## 🚀 在线演示
 
-### Content Management
-- **TV Wall Style Interface**: Optimized 9:16 aspect ratio video grid layout
-- **Advanced Search**: Search by username, post ID, audio ID, edit look ID, remix ID
-- **Smart Filtering**: Filter by date range, like count, comment count, remix count, content type
-- **Content Moderation**: Boost (good/feature), approve, block, and label video content
-- **Dynamic Sorting**: Sort by time, likes, comments, remixes (ascending/descending)
+**Live Demo**: [https://your-app.vercel.app](https://your-app.vercel.app) (部署后更新)
 
-### Testing Feeds
-- **Real-time Algorithm Testing**: Live parameter adjustment for recommendation algorithms
-- **Video Playback**: Auto-playing videos with muted start, sound on hover
-- **Parameter Control**: Adjust Following/Recent/For You weights, engagement weights, time decay
-- **Content Filtering**: Same content tag filters as Content Management for consistency
-- **Live Preview**: Instantly see how parameter changes affect content ranking
+## ✨ 功能特性
 
-## Video Features
+### 📹 内容管理 (Content Management)
+- **智能过滤系统**: 支持用户名、Post ID、Audio ID、Edit Look ID、Remix ID多种搜索方式
+- **高级筛选**: 日期范围、点赞数、评论数、转发数等多维度筛选
+- **内容标签**: All Content、Feature、Good、Approved、Waiting for Review
+- **Apply/Reset过滤器**: 实时应用过滤条件，提升用户体验
+- **内容标记**: 支持Good、Feature、Approve、Block四种操作
+- **详情查看**: 完整的内容详情弹窗
 
-### 🎥 Auto-Playing Videos
-- **Silent Auto-play**: Videos start playing automatically in muted mode
-- **Hover Audio**: Sound activates when hovering over video cards
-- **Real Video Content**: Uses actual video URLs for testing
-- **Responsive Design**: 9:16 aspect ratio optimized for mobile content
+### 🧪 测试Feeds (Testing Feeds)  
+- **算法测试**: 模拟Feed推荐算法效果
+- **参数调整**: 支持权重和参数实时调整（开发中）
+- **排名显示**: 显示内容在算法中的排名
+- **一致UI**: 与Content Management保持统一的卡片设计
 
-### 🎛️ Algorithm Testing
-- **Feed Weight Distribution**: Following (40%), Recent (20%), For You (40%)
-- **Engagement Weights**: Customizable multipliers for likes, comments, remixes, watch time
-- **Time Decay**: Configurable time-based content ranking decay
-- **Boost System**: Priority scoring for featured and boosted content
+### 🎥 视频体验
+- **9:16竖屏比例**: 适配现代短视频格式  
+- **智能播放**: 自动静音播放，悬停播放声音
+- **TV墙布局**: 响应式网格布局，最佳视觉体验
+- **实时指标**: 观看百分比、互动数据实时显示
 
-## Content Categories
+## 🛠️ 技术栈
 
-### Unified Content Tags (both pages)
-- **All Content**: View all content regardless of status
-- **Feature**: Content boosted with feature priority
-- **Good**: Content boosted with good rating
-- **Approved**: Content approved for general distribution
-- **None Approved**: Pending content without boosts
-- **Waiting for Review**: All content pending review
+- **前端框架**: Next.js 14 (App Router)
+- **UI库**: React 18 + TypeScript
+- **样式方案**: Tailwind CSS
+- **状态管理**: React Hooks
+- **图标方案**: Emoji (轻量化)
+- **视频处理**: HTML5 Video API
+- **部署平台**: Vercel
 
-## Algorithm Formula
-```
-Score = (a×likes + b×comments + c×remixes + d×watch_%) × time_decay + boost_bonus
-```
+## 📦 快速开始
 
-## Technical Stack
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Styling**: Tailwind CSS with custom design system
-- **Video**: HTML5 video with auto-play and hover controls
-- **State Management**: React Hooks (useState, useMemo, useRef)
-- **UI Components**: Custom components with emoji icons
-- **Responsive Design**: Mobile-first approach with grid layouts
-
-## Getting Started
+### 本地开发
 
 ```bash
-# Install dependencies
+# 克隆项目
+git clone https://github.com/WellyXY/moderation.git
+cd moderation
+
+# 安装依赖
 npm install
 
-# Run development server
+# 启动开发服务器
 npm run dev
 
-# Open http://localhost:3000
+# 访问 http://localhost:3000
 ```
 
-## Page Navigation
+### 构建部署
 
-- **📹 Content Management**: Main moderation interface
-- **🧪 Testing Feeds**: Algorithm parameter testing with video playback
+```bash
+# 构建生产版本
+npm run build
 
-## Video Implementation
-
-### Auto-Play Behavior
-```typescript
-// Videos start muted and auto-play
-video.muted = true
-video.loop = true
-video.play()
-
-// Sound activates on hover
-onMouseEnter: video.muted = false
-onMouseLeave: video.muted = true
+# 启动生产服务器
+npm start
 ```
 
-### Video Sources
-- Uses Google Cloud Storage sample videos for testing
-- 6 different video samples across various content types
-- Optimized for web playback with `playsInline` attribute
+## 🚀 Vercel部署
 
-## Design Principles
+### 自动部署 (推荐)
 
-- **Simplified Navigation**: Only essential pages for core functionality
-- **Video-First Design**: Prioritizes video content consumption experience
-- **Real-time Feedback**: Immediate response to algorithm parameter changes
-- **Intuitive Controls**: Clear action buttons and filtering options
-- **Performance Optimized**: Efficient video loading and playback
+1. **连接GitHub仓库**
+   - 访问 [Vercel Dashboard](https://vercel.com/dashboard)
+   - 点击 "New Project" 
+   - 选择 `WellyXY/moderation` 仓库
 
-## Core Functionality
+2. **配置设置**
+   - Framework Preset: `Next.js`
+   - Build Command: `npm run build` (自动检测)
+   - Output Directory: `.next` (自动检测)
+   - Install Command: `npm install` (自动检测)
 
-### Content Management
-1. **Review Content**: Large video display with full context
-2. **Apply Filters**: Date, engagement metrics, content status
-3. **Moderation Actions**: Boost, approve, block decisions
-4. **Search System**: Multi-type ID search with comma separation
+3. **部署**
+   - 点击 "Deploy" 开始自动部署
+   - 部署完成后获得线上地址
 
-### Testing Feeds
-1. **Algorithm Tuning**: Real-time parameter adjustment
-2. **Content Filtering**: Same categories as Content Management
-3. **Video Playback**: Auto-play with hover audio control
-4. **Ranking Preview**: Immediate visual feedback on changes
+### 手动部署
 
-## Browser Compatibility
+```bash
+# 安装Vercel CLI
+npm i -g vercel
 
-- **Chrome/Edge**: Full video auto-play support
-- **Safari**: Requires user interaction for audio (hover still works)
-- **Firefox**: Full functionality with auto-play enabled
-- **Mobile**: Optimized `playsInline` for iOS/Android 
+# 登录Vercel
+vercel login
+
+# 部署到Vercel
+vercel --prod
+```
+
+## 📁 项目结构
+
+```
+moderation/
+├── app/                    # Next.js App Router
+│   ├── components/         # React组件
+│   │   ├── ContentManagement.tsx    # 内容管理页面
+│   │   ├── ExperimentRanking.tsx   # 测试Feeds页面  
+│   │   ├── Header.tsx              # 顶部导航
+│   │   └── Sidebar.tsx             # 侧边栏导航
+│   ├── types/             # TypeScript类型定义
+│   ├── globals.css        # 全局样式
+│   ├── layout.tsx         # 根布局
+│   └── page.tsx           # 首页
+├── public/                # 静态资源
+├── vercel.json           # Vercel配置
+├── next.config.js        # Next.js配置
+├── tailwind.config.js    # Tailwind配置
+└── package.json          # 项目依赖
+```
+
+## 🎯 核心功能详解
+
+### Apply Filters 功能
+- **实时过滤**: 用户设置过滤条件后点击Apply按钮应用
+- **状态管理**: 分离过滤器设置状态和应用状态
+- **用户反馈**: 操作成功后显示友好提示
+- **重置功能**: 一键清空所有过滤条件
+
+### 视频播放体验
+- **自动播放**: 页面加载时自动静音播放所有视频
+- **交互音频**: 鼠标悬停时启用音频，离开时静音
+- **性能优化**: 使用`playsInline`属性优化移动端体验
+
+### 内容审核工作流
+```
+Content → Waiting for Review → [Good/Feature/Approve/Block] → Final Status
+```
+
+## 🔧 环境配置
+
+### 开发环境
+- Node.js >= 18.0.0
+- npm >= 8.0.0
+
+### 生产环境
+- 自动优化构建
+- CDN加速静态资源
+- 服务端渲染(SSR)支持
+
+## 📈 性能优化
+
+- **代码分割**: 自动按路由分割代码
+- **图片优化**: Next.js Image组件自动优化
+- **CSS优化**: Tailwind CSS按需加载
+- **构建优化**: 生产环境自动Tree Shaking
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request来完善这个项目！
+
+## 📄 开源协议
+
+MIT License
+
+---
+
+**🎉 现在就部署到Vercel，体验现代化的内容审核管理！** 
