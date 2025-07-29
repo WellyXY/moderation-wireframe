@@ -485,7 +485,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
             ? 'bg-purple-100 text-purple-800' 
             : 'bg-green-100 text-green-800'
         }`}>
-          {post.boostType === 'feature' ? '⭐ Featured' : '👍 Boosted'}
+                          {post.boostType === 'feature' ? '⭐ Featured' : '👍 Good'}
         </span>
       )
     }
@@ -647,7 +647,7 @@ export default function ContentManagement() {
     minLikes: '',
     minComments: '',
     minRemixes: '',
-    contentType: 'all'
+    contentType: 'waiting_for_review'
   })
 
   const handleSearch = () => {
@@ -664,7 +664,7 @@ export default function ContentManagement() {
       minLikes,
       minComments,
       minRemixes,
-      contentType: filterContentType
+      contentType: appliedFilters.contentType // Keep current contentType, don't update it
     })
     alert('🔄 Filters applied successfully!')
   }
@@ -692,9 +692,9 @@ export default function ContentManagement() {
         }
       })()
 
-      // Content type filtering using applied filters
+      // Content type filtering - instant effect (not using applied filters)
       const matchesContentType = (() => {
-        switch (appliedFilters.contentType) {
+        switch (filterContentType) {
           case 'feature':
             return post.isBoosted && post.boostType === 'feature'
           case 'good':
