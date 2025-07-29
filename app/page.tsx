@@ -5,6 +5,7 @@ import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import ContentManagement from './components/ContentManagement'
 import ExperimentRanking from './components/ExperimentRanking'
+import TrendingFeeds from './components/TrendingFeeds'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('content')
@@ -17,6 +18,7 @@ export default function Home() {
         <main className="flex-1">
           {activeTab === 'content' && <ContentManagement />}
           {activeTab === 'experiment' && <ExperimentRanking />}
+          {activeTab === 'trending' && <TrendingFeeds />}
         </main>
       </div>
     </div>

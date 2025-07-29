@@ -10,6 +10,7 @@ interface SidebarProps {
 const menuItems = [
   { id: 'content', label: 'Content Management', icon: '📹' },
   { id: 'experiment', label: 'Testing Feeds', icon: '🧪' },
+  { id: 'trending', label: 'Trending Feeds', icon: '🔥' },
 ]
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
