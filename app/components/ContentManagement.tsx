@@ -534,10 +534,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
           {getStatusBadge(post)}
         </div>
 
-        {/* 观看百分比 - 右上角 */}
-        <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-          {post.watchPercentage}%
-        </div>
+
 
         {/* 音频指示器 - 右下角 */}
         <div className="absolute bottom-2 right-2">
