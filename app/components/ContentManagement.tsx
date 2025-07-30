@@ -437,7 +437,7 @@ const mockPosts: Post[] = [
 interface VideoCardProps {
   post: Post
   onSelectPost: (post: Post) => void
-  onAction: (postId: string, action: 'boost_feature' | 'approve' | 'block') => void
+  onAction: (postId: string, action: 'boost' | 'deboost') => void
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) => {
@@ -470,42 +470,19 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
 
   // 状态徽章 - 与Testing Feeds一致
   const getStatusBadge = (post: Post) => {
-    if (post.isBlocked) {
+    if (post.isBoosted) {
       return (
-        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-          ❌ Disapproved
-        </span>
-      )
-    }
-    
-    if (post.isBoosted && post.boostType === 'feature') {
-      return (
-        <span className="px-2 py-1 text-xs font-medium rounded-full flex items-center bg-purple-100 text-purple-800">
+        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full flex items-center">
           🚀 Boost
         </span>
       )
     }
     
-    switch (post.status) {
-      case 'approved':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex items-center">
-            ✓ Approved
-          </span>
-        )
-      case 'blocked':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-            🚫 Blocked
-          </span>
-        )
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full flex items-center">
-            ⏳ Pending
-          </span>
-        )
-    }
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full flex items-center">
+        📄 Normal
+      </span>
+    )
   }
 
   return (
@@ -579,28 +556,24 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
           >
             View Details
           </button>
-          <div className="grid grid-cols-3 gap-1">
-            <button
-              className="px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs rounded transition-colors"
-              title="Boost"
-              onClick={() => onAction(post.id, 'boost_feature')}
-            >
-              🚀 Boost
-            </button>
-            <button
-              className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors"
-              title="Approve"
-              onClick={() => onAction(post.id, 'approve')}
-            >
-              ✓ Approve
-            </button>
-            <button
-              className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors"
-              title="Disapproved"
-              onClick={() => onAction(post.id, 'block')}
-            >
-              ❌ Disapproved
-            </button>
+          <div className="grid grid-cols-2 gap-1">
+            {post.isBoosted ? (
+              <button
+                className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors col-span-2"
+                title="Deboost"
+                onClick={() => onAction(post.id, 'deboost')}
+              >
+                ⬇️ Deboost
+              </button>
+            ) : (
+              <button
+                className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded transition-colors col-span-2"
+                title="Boost"
+                onClick={() => onAction(post.id, 'boost')}
+              >
+                ⬆️ Boost
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -614,7 +587,7 @@ export default function ContentManagement() {
   const [searchValue, setSearchValue] = useState('')
   const [activeSearchValue, setActiveSearchValue] = useState('')
   const [activeSearchType, setActiveSearchType] = useState<string>('username')
-  const [filterContentType, setFilterContentType] = useState<string>('waiting_for_review')
+  const [filterContentType, setFilterContentType] = useState<string>('boost')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [minLikes, setMinLikes] = useState('')
@@ -690,14 +663,10 @@ export default function ContentManagement() {
       // Content type filtering - instant effect (not using applied filters)
       const matchesContentType = (() => {
         switch (filterContentType) {
-          case 'feature':
-            return post.isBoosted && post.boostType === 'feature'
-          case 'approved':
-            return post.status === 'approved' && !post.isBoosted
-          case 'none_approved':
-            return post.status === 'pending' && !post.isBoosted
-          case 'waiting_for_review':
-            return post.status === 'pending'
+          case 'boost':
+            return post.isBoosted
+          case 'normal':
+            return !post.isBoosted
           default:
             return true
         }
@@ -763,38 +732,24 @@ export default function ContentManagement() {
       return sortOrder === 'desc' ? bValue - aValue : aValue - bValue
     })
 
-  const handleAction = (postId: string, action: 'boost_feature' | 'approve' | 'block') => {
+  const handleAction = (postId: string, action: 'boost' | 'deboost') => {
     setPosts(prev => prev.map(post => {
       if (post.id === postId) {
         const now = new Date()
         switch (action) {
-          case 'boost_feature':
+          case 'boost':
             return {
               ...post,
               isBoosted: true,
-              boostType: 'feature',
+              boostType: 'feature' as const,
               boostedAt: now,
               boostExpiry: new Date(now.getTime() + 48 * 60 * 60 * 1000),
-              status: 'approved' as const, // Boost implies approval but shows in boost category
+              status: 'approved' as const,
               isBlocked: false
             }
-          case 'approve':
+          case 'deboost':
             return { 
               ...post, 
-              status: 'approved' as const,
-              isBlocked: false,
-              // Clear boost status when manually approving
-              isBoosted: false,
-              boostType: undefined,
-              boostedAt: undefined,
-              boostExpiry: undefined
-            }
-          case 'block':
-            return { 
-              ...post, 
-              status: 'blocked' as const,
-              isBlocked: true,
-              // Clear boost status when blocking
               isBoosted: false,
               boostType: undefined,
               boostedAt: undefined,
@@ -990,11 +945,8 @@ export default function ContentManagement() {
               onChange={(e) => setFilterContentType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
-              <option value="all">All Content</option>
-              <option value="feature">Boost</option>
-              <option value="approved">Approved</option>
-              <option value="none_approved">None Approved</option>
-              <option value="waiting_for_review">Waiting for Review</option>
+              <option value="boost">Boost</option>
+              <option value="normal">Normal</option>
             </select>
           </div>
         </div>

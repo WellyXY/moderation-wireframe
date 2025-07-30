@@ -737,7 +737,7 @@ const TrendingFeeds: React.FC = () => {
           /* TV Wall Grid Layout */
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {filteredAndSortedPosts.map((post: Post, index: number) => (
-              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} />
+                              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} onAction={handleAction} />
             ))}
           </div>
         ) : (
@@ -909,9 +909,10 @@ interface VideoCardProps {
   post: Post
   index: number
   onSelectPost: (post: Post) => void
+  onAction: (postId: string, action: 'boost' | 'deboost') => void
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onAction }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -1062,7 +1063,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
               <button
                 className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors col-span-2"
                 title="Deboost"
-                onClick={() => handleAction(post.id, 'deboost')}
+                onClick={() => onAction(post.id, 'deboost')}
               >
                 ⬇️ Deboost
               </button>
@@ -1070,7 +1071,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
               <button
                 className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded transition-colors col-span-2"
                 title="Boost"
-                onClick={() => handleAction(post.id, 'boost')}
+                onClick={() => onAction(post.id, 'boost')}
               >
                 ⬆️ Boost
               </button>
