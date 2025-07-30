@@ -4,8 +4,21 @@ import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { Post } from '../types'
 
 const ExperimentRanking: React.FC = () => {
-  // Feed算法参数
+  // Feed算法参数 (输入状态)
   const [feedParams, setFeedParams] = useState({
+    followingWeight: 40, // Following权重 (%)
+    recentWeight: 20,    // Recent权重 (%)
+    forYouWeight: 40,    // For You Trending权重 (%)
+    likeWeight: 1.0,     // a: 点赞权重系数
+    commentWeight: 1.5,  // b: 评论权重系数
+    remixWeight: 2.0,    // c: Remix权重系数
+    watchWeight: 3.0,    // d: 观看完成度权重系数
+    timeDecay: 0.8,      // 时间衰减系数
+    likeThreshold: 1000, // T: like count阈值
+  })
+
+  // 已应用的算法参数 (实际生效状态)
+  const [appliedFeedParams, setAppliedFeedParams] = useState({
     followingWeight: 40, // Following权重 (%)
     recentWeight: 20,    // Recent权重 (%)
     forYouWeight: 40,    // For You Trending权重 (%)
@@ -551,28 +564,50 @@ const ExperimentRanking: React.FC = () => {
       const calculateScore = (post: Post) => {
         // 基础参与度评分 (a×like + b×comment + c×remix + d×watch%)
         const engagementScore = (
-          feedParams.likeWeight * post.likes +
-          feedParams.commentWeight * post.comments +
-          feedParams.remixWeight * post.remixes +
-          feedParams.watchWeight * post.watchPercentage
+          appliedFeedParams.likeWeight * post.likes +
+          appliedFeedParams.commentWeight * post.comments +
+          appliedFeedParams.remixWeight * post.remixes +
+          appliedFeedParams.watchWeight * post.watchPercentage
         )
 
         // 时间衰减
         const hoursOld = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
-        const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursOld / 24)
+        const timeDecayFactor = Math.pow(appliedFeedParams.timeDecay, hoursOld / 24)
 
         // Like count > T 加分
-        const thresholdBonus = post.likes > feedParams.likeThreshold ? 500 : 0
+        const thresholdBonus = post.likes > appliedFeedParams.likeThreshold ? 500 : 0
 
-        // Boost加分 (额外加分)
-        const boostScore = post.isBoosted ? 1000 : 0
+        // Boost加分
+        const boostBonus = post.isBoosted ? 1000 : 0
 
-        return (engagementScore * timeDecayFactor) + thresholdBonus + boostScore
+        return (engagementScore * timeDecayFactor) + thresholdBonus + boostBonus
       }
 
-      return calculateScore(b) - calculateScore(a)
+      return calculateScore(b) - calculateScore(a) // 从高到低排序
     })
-  }, [filteredByContentType, feedParams])
+  }, [filteredByContentType, appliedFeedParams])
+
+  // 应用参数变更
+  const handleApplyParams = () => {
+    setAppliedFeedParams({ ...feedParams })
+  }
+
+  // 重置参数到默认值
+  const handleResetParams = () => {
+    const defaultParams = {
+      followingWeight: 40,
+      recentWeight: 20,
+      forYouWeight: 40,
+      likeWeight: 1.0,
+      commentWeight: 1.5,
+      remixWeight: 2.0,
+      watchWeight: 3.0,
+      timeDecay: 0.8,
+      likeThreshold: 1000,
+    }
+    setFeedParams(defaultParams)
+    setAppliedFeedParams(defaultParams)
+  }
 
   return (
     <div className="p-6">
@@ -699,24 +734,20 @@ const ExperimentRanking: React.FC = () => {
 
         <div className="mt-4 flex gap-3">
           <button
-            onClick={() => setFeedParams({
-              followingWeight: 40,
-              recentWeight: 20,
-              forYouWeight: 40,
-              likeWeight: 1.0,
-              commentWeight: 1.5,
-              remixWeight: 2.0,
-              watchWeight: 3.0,
-              timeDecay: 0.8,
-              likeThreshold: 1000,
-            })}
+            onClick={handleApplyParams}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+          >
+            Apply Parameters
+          </button>
+          <button
+            onClick={handleResetParams}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
           >
             Reset to Default
           </button>
           <div className="text-sm text-gray-600 flex items-center">
-            <span className="mr-2">🔄</span>
-            Changes apply automatically to the feed below
+            <span className="mr-2">⚙️</span>
+            Click Apply to update feed with new parameters
           </div>
         </div>
       </div>
@@ -921,14 +952,14 @@ const ExperimentRanking: React.FC = () => {
                     {(() => {
                       // 计算算法参数 (与List View一致)
                       const engagementScore = (
-                        feedParams.likeWeight * selectedPost.likes +
-                        feedParams.commentWeight * selectedPost.comments +
-                        feedParams.remixWeight * selectedPost.remixes +
-                        feedParams.watchWeight * selectedPost.watchPercentage
+                        appliedFeedParams.likeWeight * selectedPost.likes +
+                        appliedFeedParams.commentWeight * selectedPost.comments +
+                        appliedFeedParams.remixWeight * selectedPost.remixes +
+                        appliedFeedParams.watchWeight * selectedPost.watchPercentage
                       )
                       const hoursSince = (Date.now() - selectedPost.createdAt.getTime()) / (1000 * 60 * 60)
-                      const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursSince / 24)
-                      const thresholdBonus = selectedPost.likes > feedParams.likeThreshold ? 500 : 0
+                      const timeDecayFactor = Math.pow(appliedFeedParams.timeDecay, hoursSince / 24)
+                      const thresholdBonus = selectedPost.likes > appliedFeedParams.likeThreshold ? 500 : 0
                       const boostBonus = selectedPost.isBoosted ? 1000 : 0
                       const finalScore = (engagementScore * timeDecayFactor) + thresholdBonus + boostBonus
                       
