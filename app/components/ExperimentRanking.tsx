@@ -17,8 +17,8 @@ const ExperimentRanking: React.FC = () => {
     likeThreshold: 1000, // T: like count阈值
   })
 
-  // 内容标签过滤器 - Boost / Normal
-  const [filterContentType, setFilterContentType] = useState('boost')
+  // 内容标签过滤器 - All / Follow / For you / Recent
+  const [filterContentType, setFilterContentType] = useState('all')
 
   // 视图切换状态 (grid / list)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -522,16 +522,22 @@ const ExperimentRanking: React.FC = () => {
     }
   ])
 
-  // 根据内容类型过滤 - Boost / Normal
+  // 根据内容类型过滤 - All / Follow / For You / Recent
   const filteredByContentType = useMemo(() => {
     return mockFeedPosts.filter(post => {
       switch (filterContentType) {
-        case 'boost':
-          // Boost: 只显示已boost的内容
-          return post.isBoosted
-        case 'normal':
-          // Normal: 只显示未boost的内容
-          return !post.isBoosted
+        case 'follow':
+          // Follow: 模拟关注的用户内容
+          return ['user_001', 'user_002', 'user_003', 'user_004', 'user_005'].includes(post.userId)
+        case 'for_you':
+          // For You: 包含所有推荐内容（boosted + high engagement）
+          return post.isBoosted || post.likes > 1000
+        case 'recent':
+          // Recent: 最近的内容 (最近24小时)
+          const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+          return post.createdAt.getTime() > dayAgo
+        case 'all':
+          return true
         default:
           return true
       }
@@ -726,8 +732,10 @@ const ExperimentRanking: React.FC = () => {
               onChange={(e) => setFilterContentType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
-              <option value="boost">Boost</option>
-              <option value="normal">Normal</option>
+              <option value="all">All</option>
+              <option value="follow">Follow</option>
+              <option value="for_you">For You</option>
+              <option value="recent">Recent</option>
             </select>
             
             {/* View Toggle */}
@@ -765,7 +773,7 @@ const ExperimentRanking: React.FC = () => {
           /* TV Wall Grid Layout */
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {rankedPosts.map((post: Post, index) => (
-                              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} onAction={handleAction} />
+                              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} onAction={handleAction} filterType={filterContentType} />
             ))}
           </div>
         ) : (
@@ -838,16 +846,14 @@ const ExperimentRanking: React.FC = () => {
                       <td className="border border-gray-200 px-2 py-1">{decayFactor.toFixed(3)}</td>
                       <td className="border border-gray-200 px-2 py-1">
                         <div className="flex flex-wrap gap-1">
-                          {post.isBoosted && (
+                          {post.isBoosted ? (
                             <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs">
                               🚀 Boost
                             </span>
-                          )}
-                          {post.status === 'approved' && (
-                            <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded text-xs">✓ Approved</span>
-                          )}
-                          {post.isBlocked && (
-                            <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded text-xs">❌ Blocked</span>
+                          ) : (
+                            <span className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-xs">
+                              📄 Normal
+                            </span>
                           )}
                         </div>
                       </td>
@@ -909,6 +915,43 @@ const ExperimentRanking: React.FC = () => {
                     <div>Watch Rate: {selectedPost.watchPercentage}%</div>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Algorithm Parameters</label>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {(() => {
+                      // 计算算法参数 (与List View一致)
+                      const engagementScore = (
+                        feedParams.likeWeight * selectedPost.likes +
+                        feedParams.commentWeight * selectedPost.comments +
+                        feedParams.remixWeight * selectedPost.remixes +
+                        feedParams.watchWeight * selectedPost.watchPercentage
+                      )
+                      const hoursSince = (Date.now() - selectedPost.createdAt.getTime()) / (1000 * 60 * 60)
+                      const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursSince / 24)
+                      const thresholdBonus = selectedPost.likes > feedParams.likeThreshold ? 500 : 0
+                      const boostBonus = selectedPost.isBoosted ? 1000 : 0
+                      const finalScore = (engagementScore * timeDecayFactor) + thresholdBonus + boostBonus
+                      
+                      const likeRate = selectedPost.likes / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      const commentRate = selectedPost.comments / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      const remixRate = selectedPost.remixes / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      
+                      return (
+                        <>
+                          <div>Final Score: {finalScore.toFixed(2)}</div>
+                          <div>Hours Since: {hoursSince.toFixed(1)}h</div>
+                          <div>Like Rate: {(likeRate * 100).toFixed(1)}%</div>
+                          <div>Comment Rate: {(commentRate * 100).toFixed(1)}%</div>
+                          <div>Remix Rate: {(remixRate * 100).toFixed(1)}%</div>
+                          <div>Decay Factor: {timeDecayFactor.toFixed(3)}</div>
+                          <div>Engagement Score: {engagementScore.toFixed(2)}</div>
+                          <div>Threshold Bonus: {thresholdBonus}</div>
+                          <div>Boost Bonus: {boostBonus}</div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => setSelectedPost(null)}
@@ -926,15 +969,93 @@ const ExperimentRanking: React.FC = () => {
   )
 }
 
+// 获取Content Type标签 - For You页面专用
+const getContentTypeBadge = (post: Post, filterType: string) => {
+  // 判断是否为关注用户
+  const isFollowing = ['user_001', 'user_002', 'user_003', 'user_004', 'user_005'].includes(post.userId)
+  
+  // 判断是否为最近内容
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+  const isRecent = post.createdAt.getTime() > dayAgo
+  
+  // 判断是否为For You推荐内容
+  const isForYou = post.isBoosted || post.likes > 1000
+  
+  if (filterType === 'follow' && isFollowing) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+        👥 Follow
+      </span>
+    )
+  } else if (filterType === 'recent' && isRecent) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+        🕒 Recent
+      </span>
+    )
+  } else if (filterType === 'for_you' && isForYou) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+        ✨ For You
+      </span>
+    )
+  } else if (filterType === 'all') {
+    // 在All模式下，显示主要类型
+    if (isFollowing) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+          👥 Follow
+        </span>
+      )
+    } else if (isRecent) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+          🕒 Recent
+        </span>
+      )
+    } else if (isForYou) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+          ✨ For You
+        </span>
+      )
+    }
+  }
+  
+  // 默认显示主要类型
+  if (isFollowing) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+        👥 Follow
+      </span>
+    )
+  } else if (isRecent) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+        🕒 Recent
+      </span>
+    )
+  } else if (isForYou) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+        ✨ For You
+      </span>
+    )
+  }
+  
+  return null
+}
+
 // 视频卡片组件 - 与ContentManagement UI完全一致
 interface VideoCardProps {
   post: Post
   index: number
   onSelectPost: (post: Post) => void
   onAction: (postId: string, action: 'boost' | 'deboost') => void
+  filterType: string
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onAction }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onAction, filterType }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -980,26 +1101,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onActi
       )
     }
     
-    switch (post.status) {
-      case 'approved':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex items-center">
-            ✓ Approved
-          </span>
-        )
-      case 'blocked':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-            🚫 Blocked
-          </span>
-        )
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full flex items-center">
-            ⏳ Pending
-          </span>
-        )
-    }
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full flex items-center">
+        📄 Normal
+      </span>
+    )
   }
 
   return (
@@ -1070,6 +1176,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onActi
             <span className="flex items-center">💬 {post.comments}</span>
             <span className="flex items-center">🔄 {post.remixes}</span>
           </div>
+        </div>
+
+        {/* Content Type Badge */}
+        <div className="mb-2">
+          {getContentTypeBadge(post, filterType)}
         </div>
 
         {/* Action Buttons - 与ContentManagement完全一致，但功能简化 */}

@@ -14,8 +14,8 @@ const TrendingFeeds: React.FC = () => {
     likeThreshold: 1000, // T: like count阈值
   })
 
-  // 内容标签过滤器 - Boost / Normal
-  const [filterContentType, setFilterContentType] = useState('boost')
+  // 内容标签过滤器 - All / Boost / Normal
+  const [filterContentType, setFilterContentType] = useState('all')
 
   // 视图切换状态 (grid / list)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -500,7 +500,7 @@ const TrendingFeeds: React.FC = () => {
     }
   ]
 
-  // 过滤和排序帖子 - 按Boost/Normal状态，按算法评分排序
+  // 过滤和排序帖子 - 按All/Boost/Normal状态，按算法评分排序
   const filteredAndSortedPosts = useMemo(() => {
     return mockFeedPosts
       .filter(post => {
@@ -510,6 +510,8 @@ const TrendingFeeds: React.FC = () => {
             return post.isBoosted
           case 'normal':
             return !post.isBoosted
+          case 'all':
+            return true
           default:
             return true
         }
@@ -698,6 +700,7 @@ const TrendingFeeds: React.FC = () => {
               onChange={(e) => setFilterContentType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
+              <option value="all">All</option>
               <option value="boost">Boost</option>
               <option value="normal">Normal</option>
             </select>
@@ -737,7 +740,7 @@ const TrendingFeeds: React.FC = () => {
           /* TV Wall Grid Layout */
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {filteredAndSortedPosts.map((post: Post, index: number) => (
-                              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} onAction={handleAction} />
+                              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} onAction={handleAction} filterType={filterContentType} />
             ))}
           </div>
         ) : (
@@ -816,16 +819,14 @@ const TrendingFeeds: React.FC = () => {
                       <td className="border border-gray-200 px-2 py-1">{hoursSince.toFixed(1)}h</td>
                       <td className="border border-gray-200 px-2 py-1">
                         <div className="flex flex-wrap gap-1">
-                          {post.isBoosted && (
+                          {post.isBoosted ? (
                             <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs">
                               🚀 Boost
                             </span>
-                          )}
-                          {post.status === 'approved' && (
-                            <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded text-xs">✓ Approved</span>
-                          )}
-                          {post.isBlocked && (
-                            <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded text-xs">❌ Blocked</span>
+                          ) : (
+                            <span className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-xs">
+                              📄 Normal
+                            </span>
                           )}
                         </div>
                       </td>
@@ -887,6 +888,45 @@ const TrendingFeeds: React.FC = () => {
                     <div>Watch Rate: {selectedPost.watchPercentage}%</div>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Trending Algorithm Parameters</label>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {(() => {
+                      // 计算trending算法参数 (与List View一致)
+                      const engagementScore = (
+                        feedParams.likeWeight * selectedPost.likes +
+                        feedParams.commentWeight * selectedPost.comments +
+                        feedParams.remixWeight * selectedPost.remixes +
+                        feedParams.watchWeight * selectedPost.watchPercentage
+                      )
+                      const hoursSince = (Date.now() - selectedPost.createdAt.getTime()) / (1000 * 60 * 60)
+                      const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursSince / 24)
+                      const thresholdBonus = selectedPost.likes > feedParams.likeThreshold ? 500 : 0
+                      const boostHours = selectedPost.boostedAt ? (Date.now() - selectedPost.boostedAt.getTime()) / (1000 * 60 * 60) : 48
+                      const trendingBonus = selectedPost.isBoosted ? Math.max(1000 - (boostHours * 10), 200) : 0
+                      const totalScore = (engagementScore * timeDecayFactor) + thresholdBonus + trendingBonus
+                      
+                      const likeRate = selectedPost.likes / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      const commentRate = selectedPost.comments / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      const remixRate = selectedPost.remixes / (selectedPost.likes + selectedPost.comments + selectedPost.remixes + 100)
+                      
+                      return (
+                        <>
+                          <div>Total Score: {totalScore.toFixed(2)}</div>
+                          <div>Hours Since: {hoursSince.toFixed(1)}h</div>
+                          <div>Like Rate: {(likeRate * 100).toFixed(1)}%</div>
+                          <div>Comment Rate: {(commentRate * 100).toFixed(1)}%</div>
+                          <div>Remix Rate: {(remixRate * 100).toFixed(1)}%</div>
+                          <div>Decay Factor: {timeDecayFactor.toFixed(3)}</div>
+                          <div>Engagement Score: {engagementScore.toFixed(2)}</div>
+                          <div>Threshold Bonus: {thresholdBonus}</div>
+                          <div>Trending Bonus: {trendingBonus.toFixed(0)}</div>
+                          <div>Boost Time: {selectedPost.boostedAt?.toLocaleString().split(',')[0] || 'N/A'}</div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => setSelectedPost(null)}
@@ -904,15 +944,50 @@ const TrendingFeeds: React.FC = () => {
   )
 }
 
+// 获取Content Type标签 - Trending页面专用
+const getContentTypeBadge = (post: Post, filterType: string) => {
+  if (filterType === 'boost' && post.isBoosted) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+        🚀 Boost
+      </span>
+    )
+  } else if (filterType === 'normal' && !post.isBoosted) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+        📄 Normal
+      </span>
+    )
+  } else if (filterType === 'all') {
+    // 在All模式下，显示实际状态
+    if (post.isBoosted) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+          🚀 Boost
+        </span>
+      )
+    } else {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+          📄 Normal
+        </span>
+      )
+    }
+  }
+  
+  return null
+}
+
 // 视频卡片组件 - 与ContentManagement UI完全一致
 interface VideoCardProps {
   post: Post
   index: number
   onSelectPost: (post: Post) => void
   onAction: (postId: string, action: 'boost' | 'deboost') => void
+  filterType: string
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onAction }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onAction, filterType }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -958,26 +1033,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onActi
       )
     }
     
-    switch (post.status) {
-      case 'approved':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex items-center">
-            ✓ Approved
-          </span>
-        )
-      case 'blocked':
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-            🚫 Blocked
-          </span>
-        )
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full flex items-center">
-            ⏳ Pending
-          </span>
-        )
-    }
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full flex items-center">
+        📄 Normal
+      </span>
+    )
   }
 
   return (
@@ -1048,6 +1108,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost, onActi
             <span className="flex items-center">💬 {post.comments}</span>
             <span className="flex items-center">🔄 {post.remixes}</span>
           </div>
+        </div>
+
+        {/* Content Type Badge */}
+        <div className="mb-2">
+          {getContentTypeBadge(post, filterType)}
         </div>
 
         {/* Action Buttons - 与ContentManagement完全一致，但功能简化 */}

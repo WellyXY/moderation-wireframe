@@ -485,6 +485,23 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
     )
   }
 
+  // 获取Content Type标签
+  const getContentTypeBadge = (post: Post) => {
+    if (post.isBoosted) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+          🚀 Boost
+        </span>
+      )
+    } else {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+          📄 Normal
+        </span>
+      )
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* Video Player Area - 9:16 aspect ratio */}
@@ -548,6 +565,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
           </div>
         </div>
 
+        {/* Content Type Badge */}
+        <div className="mb-2">
+          {getContentTypeBadge(post)}
+        </div>
+
         {/* Action Buttons - 与Testing Feeds完全一致 */}
         <div className="space-y-1">
           <button
@@ -587,7 +609,7 @@ export default function ContentManagement() {
   const [searchValue, setSearchValue] = useState('')
   const [activeSearchValue, setActiveSearchValue] = useState('')
   const [activeSearchType, setActiveSearchType] = useState<string>('username')
-  const [filterContentType, setFilterContentType] = useState<string>('boost')
+  const [filterContentType, setFilterContentType] = useState<string>('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [minLikes, setMinLikes] = useState('')
@@ -667,6 +689,8 @@ export default function ContentManagement() {
             return post.isBoosted
           case 'normal':
             return !post.isBoosted
+          case 'all':
+            return true
           default:
             return true
         }
@@ -945,6 +969,7 @@ export default function ContentManagement() {
               onChange={(e) => setFilterContentType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
+              <option value="all">All</option>
               <option value="boost">Boost</option>
               <option value="normal">Normal</option>
             </select>
