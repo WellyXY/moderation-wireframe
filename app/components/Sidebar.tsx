@@ -9,7 +9,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'content', label: 'Content Management', icon: '📹' },
-  { id: 'experiment', label: 'Testing Feeds', icon: '🧪' },
+  { id: 'experiment', label: 'For You', icon: '🧪' },
   { id: 'trending', label: 'Trending Feeds', icon: '🔥' },
 ]
 

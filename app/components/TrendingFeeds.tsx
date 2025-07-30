@@ -652,7 +652,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
             ? 'bg-purple-100 text-purple-800' 
             : 'bg-green-100 text-green-800'
         }`}>
-                          {post.boostType === 'feature' ? '⭐ Featured' : '👍 Good'}
+                          {post.boostType === 'feature' ? '🚀 Boost' : '👍 Good'}
         </span>
       )
     }

@@ -437,7 +437,7 @@ const mockPosts: Post[] = [
 interface VideoCardProps {
   post: Post
   onSelectPost: (post: Post) => void
-  onAction: (postId: string, action: 'boost_good' | 'boost_feature' | 'approve' | 'block') => void
+  onAction: (postId: string, action: 'boost_feature' | 'approve' | 'block') => void
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) => {
@@ -473,19 +473,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
     if (post.isBlocked) {
       return (
         <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-          🚫 Blocked
+          ❌ Disapproved
         </span>
       )
     }
     
-    if (post.isBoosted) {
+    if (post.isBoosted && post.boostType === 'feature') {
       return (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center ${
-          post.boostType === 'feature' 
-            ? 'bg-purple-100 text-purple-800' 
-            : 'bg-green-100 text-green-800'
-        }`}>
-                          {post.boostType === 'feature' ? '⭐ Featured' : '👍 Good'}
+        <span className="px-2 py-1 text-xs font-medium rounded-full flex items-center bg-purple-100 text-purple-800">
+          🚀 Boost
         </span>
       )
     }
@@ -583,20 +579,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
           >
             View Details
           </button>
-          <div className="grid grid-cols-2 gap-1">
-            <button
-              className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded transition-colors"
-              title="Boost Good"
-              onClick={() => onAction(post.id, 'boost_good')}
-            >
-              👍 Good
-            </button>
+          <div className="grid grid-cols-3 gap-1">
             <button
               className="px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs rounded transition-colors"
-              title="Boost Feature"
+              title="Boost"
               onClick={() => onAction(post.id, 'boost_feature')}
             >
-              ⭐ Feature
+              🚀 Boost
             </button>
             <button
               className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors"
@@ -607,10 +596,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
             </button>
             <button
               className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors"
-              title="Block"
+              title="Disapproved"
               onClick={() => onAction(post.id, 'block')}
             >
-              🚫 Block
+              ❌ Disapproved
             </button>
           </div>
         </div>
@@ -703,8 +692,6 @@ export default function ContentManagement() {
         switch (filterContentType) {
           case 'feature':
             return post.isBoosted && post.boostType === 'feature'
-          case 'good':
-            return post.isBoosted && post.boostType === 'good'
           case 'approved':
             return post.status === 'approved' && !post.isBoosted
           case 'none_approved':
@@ -776,21 +763,11 @@ export default function ContentManagement() {
       return sortOrder === 'desc' ? bValue - aValue : aValue - bValue
     })
 
-  const handleAction = (postId: string, action: 'boost_good' | 'boost_feature' | 'approve' | 'block') => {
+  const handleAction = (postId: string, action: 'boost_feature' | 'approve' | 'block') => {
     setPosts(prev => prev.map(post => {
       if (post.id === postId) {
         const now = new Date()
         switch (action) {
-          case 'boost_good':
-            return {
-              ...post,
-              isBoosted: true,
-              boostType: 'good',
-              boostedAt: now,
-              boostExpiry: new Date(now.getTime() + 48 * 60 * 60 * 1000),
-              status: 'approved' as const, // Boost implies approval but shows in boost category
-              isBlocked: false
-            }
           case 'boost_feature':
             return {
               ...post,
@@ -835,21 +812,14 @@ export default function ContentManagement() {
     if (post.isBlocked) {
       return (
         <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-          🚫 Blocked
+          ❌ Disapproved
         </span>
       )
     }
     if (post.isBoosted && post.boostType === 'feature') {
       return (
         <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full flex items-center">
-          ⭐ Featured
-        </span>
-      )
-    }
-    if (post.isBoosted && post.boostType === 'good') {
-      return (
-        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full flex items-center">
-          👍 Good Boost
+          🚀 Boost
         </span>
       )
     }
@@ -863,7 +833,7 @@ export default function ContentManagement() {
       case 'blocked':
         return (
           <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center">
-            🚫 Blocked
+            ❌ Disapproved
           </span>
         )
       case 'pending':
@@ -1021,8 +991,7 @@ export default function ContentManagement() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
               <option value="all">All Content</option>
-              <option value="feature">Feature</option>
-              <option value="good">Good</option>
+              <option value="feature">Boost</option>
               <option value="approved">Approved</option>
               <option value="none_approved">None Approved</option>
               <option value="waiting_for_review">Waiting for Review</option>
