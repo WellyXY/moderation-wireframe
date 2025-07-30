@@ -4,6 +4,16 @@ import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { Post } from '../types'
 
 const TrendingFeeds: React.FC = () => {
+  // Feed算法参数
+  const [feedParams, setFeedParams] = useState({
+    likeWeight: 1.0,     // a: 点赞权重系数
+    commentWeight: 1.5,  // b: 评论权重系数
+    remixWeight: 2.0,    // c: Remix权重系数
+    watchWeight: 3.0,    // d: 观看完成度权重系数
+    timeDecay: 0.8,      // 时间衰减系数
+    likeThreshold: 1000, // T: like count阈值
+  })
+
   // 内容标签过滤器 - 只支持Feature和Good
   const [filterContentType, setFilterContentType] = useState('all')
 
@@ -483,7 +493,7 @@ const TrendingFeeds: React.FC = () => {
     }
   ]
 
-  // 过滤和排序帖子 - 只显示Feature和Good内容，按boostedAt时间排序
+  // 过滤和排序帖子 - 只显示Feature和Good内容，按算法评分排序
   const filteredAndSortedPosts = useMemo(() => {
     return mockFeedPosts
       .filter(post => {
@@ -501,19 +511,176 @@ const TrendingFeeds: React.FC = () => {
         }
       })
       .sort((a, b) => {
-        // 按boostedAt时间排序，最新的在前
-        const aTime = a.boostedAt?.getTime() || 0
-        const bTime = b.boostedAt?.getTime() || 0
-        return bTime - aTime
+        // Trending算法评分计算: (a×like + b×comment + c×remix + d×watch%) × time_decay + (like_count > T)
+        const calculateTrendingScore = (post: Post) => {
+          // 基础参与度评分 (a×like + b×comment + c×remix + d×watch%)
+          const engagementScore = (
+            feedParams.likeWeight * post.likes +
+            feedParams.commentWeight * post.comments +
+            feedParams.remixWeight * post.remixes +
+            feedParams.watchWeight * post.watchPercentage
+          )
+
+          // 时间衰减
+          const hoursOld = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
+          const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursOld / 24)
+
+          // Like count > T 加分
+          const thresholdBonus = post.likes > feedParams.likeThreshold ? 500 : 0
+
+          // Trending特殊加分 (基于boost时间的新鲜度)
+          const boostHours = post.boostedAt ? (Date.now() - post.boostedAt.getTime()) / (1000 * 60 * 60) : 48
+          const trendingBonus = post.isBoosted ? Math.max(1000 - (boostHours * 10), 200) : 0
+
+          return (engagementScore * timeDecayFactor) + thresholdBonus + trendingBonus
+        }
+
+        return calculateTrendingScore(b) - calculateTrendingScore(a)
       })
-  }, [filterContentType])
+  }, [filterContentType, feedParams])
 
   return (
     <div className="p-6">
       {/* 页面标题 */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Trending Feeds</h2>
-        <p className="text-gray-600">Featured and Good content ranked by boost time</p>
+        <p className="text-gray-600">Featured and Good content ranked by algorithm scoring</p>
+      </div>
+
+      {/* Feed参数调整面板 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Trending Algorithm Parameters</h3>
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-700 font-mono">
+            Formula: <span className="font-bold">(a×like + b×comment + c×remix + d×watch%) × time_decay + (like_count &gt; T) + trending_bonus</span>
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* a - Like Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              a (Like Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.likeWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                likeWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* b - Comment Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              b (Comment Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.commentWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                commentWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* c - Remix Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              c (Remix Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.remixWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                remixWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* d - Watch Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              d (Watch % Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.watchWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                watchWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* Time Decay */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Time Decay
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={feedParams.timeDecay}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                timeDecay: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* T - Like Threshold */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              T (Like Threshold)
+            </label>
+            <input
+              type="number"
+              step="100"
+              value={feedParams.likeThreshold}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                likeThreshold: parseInt(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={() => setFeedParams({
+              likeWeight: 1.0,
+              commentWeight: 1.5,
+              remixWeight: 2.0,
+              watchWeight: 3.0,
+              timeDecay: 0.8,
+              likeThreshold: 1000,
+            })}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+          >
+            Reset to Default
+          </button>
+          <div className="text-sm text-gray-600 flex items-center">
+            <span className="mr-2">🔥</span>
+            Changes apply automatically to trending feed below
+          </div>
+        </div>
       </div>
 
       {/* 内容显示区域 */}
@@ -595,25 +762,36 @@ const TrendingFeeds: React.FC = () => {
               </thead>
               <tbody>
                 {filteredAndSortedPosts.map((post, index) => {
-                  // 计算统计数据 (专门为Trending内容优化)
+                  // 计算统计数据 (与排序算法一致)
                   const hoursSince = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
-                  const boostHours = post.boostedAt ? (Date.now() - post.boostedAt.getTime()) / (1000 * 60 * 60) : 0
+                  const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursSince / 24)
                   const likeRate = post.likes / (post.likes + post.comments + post.remixes + 100) // 模拟计算
                   const commentRate = post.comments / (post.likes + post.comments + post.remixes + 100)
                   const remixRate = post.remixes / (post.likes + post.comments + post.remixes + 100)
-                  const boostScore = post.isBoosted ? 1000 + (post.likes * 0.5) : 0
+                  
+                  // 使用与排序相同的算法计算完整评分
+                  const engagementScore = (
+                    feedParams.likeWeight * post.likes +
+                    feedParams.commentWeight * post.comments +
+                    feedParams.remixWeight * post.remixes +
+                    feedParams.watchWeight * post.watchPercentage
+                  )
+                  const thresholdBonus = post.likes > feedParams.likeThreshold ? 500 : 0
+                  const boostHours = post.boostedAt ? (Date.now() - post.boostedAt.getTime()) / (1000 * 60 * 60) : 48
+                  const trendingBonus = post.isBoosted ? Math.max(1000 - (boostHours * 10), 200) : 0
+                  const totalScore = (engagementScore * timeDecayFactor) + thresholdBonus + trendingBonus
                   
                   return (
                     <tr key={post.id} className="hover:bg-gray-50">
                       <td className="border border-gray-200 px-2 py-1 font-medium">#{index + 1}</td>
                       <td className="border border-gray-200 px-2 py-1">
                         <div className="flex items-center space-x-3">
-                          <video
-                            src={post.videoUrl}
-                            className="w-12 h-20 object-cover rounded bg-gray-100"
-                            muted
-                            playsInline
-                          />
+                                                     <video
+                             src={post.videoUrl}
+                             className="w-60 h-96 object-cover rounded bg-gray-100"
+                             muted
+                             playsInline
+                           />
                           <div>
                             <div className="font-medium line-clamp-1">{post.username}</div>
                             <div className="text-gray-500 line-clamp-1">{post.content}</div>
@@ -621,7 +799,7 @@ const TrendingFeeds: React.FC = () => {
                         </div>
                       </td>
                       <td className="border border-gray-200 px-2 py-1 font-mono">{post.id.slice(0, 8)}...</td>
-                      <td className="border border-gray-200 px-2 py-1 font-mono">{boostScore.toFixed(0)}</td>
+                      <td className="border border-gray-200 px-2 py-1 font-mono">{totalScore.toFixed(0)}</td>
                       <td className="border border-gray-200 px-2 py-1">{post.likes.toLocaleString()}</td>
                       <td className="border border-gray-200 px-2 py-1">{(likeRate * 100).toFixed(1)}%</td>
                       <td className="border border-gray-200 px-2 py-1">{post.comments}</td>

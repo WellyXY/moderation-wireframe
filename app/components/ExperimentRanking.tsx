@@ -9,11 +9,12 @@ const ExperimentRanking: React.FC = () => {
     followingWeight: 40, // Following权重 (%)
     recentWeight: 20,    // Recent权重 (%)
     forYouWeight: 40,    // For You Trending权重 (%)
-    likeWeight: 1.0,     // 点赞权重系数
-    commentWeight: 1.5,  // 评论权重系数
-    remixWeight: 2.0,    // Remix权重系数
-    watchWeight: 3.0,    // 观看完成度权重系数
+    likeWeight: 1.0,     // a: 点赞权重系数
+    commentWeight: 1.5,  // b: 评论权重系数
+    remixWeight: 2.0,    // c: Remix权重系数
+    watchWeight: 3.0,    // d: 观看完成度权重系数
     timeDecay: 0.8,      // 时间衰减系数
+    likeThreshold: 1000, // T: like count阈值
   })
 
   // 内容标签过滤器 - For You / Following / Recent Post
@@ -518,9 +519,9 @@ const ExperimentRanking: React.FC = () => {
   // 根据Feed算法参数计算排序后的内容
   const rankedPosts = useMemo(() => {
     return [...filteredByContentType].sort((a, b) => {
-      // 模拟Feed算法评分计算
+      // Feed算法评分计算: (a×like + b×comment + c×remix + d×watch%) × time_decay + (like_count > T)
       const calculateScore = (post: Post) => {
-        // 基础参与度评分
+        // 基础参与度评分 (a×like + b×comment + c×remix + d×watch%)
         const engagementScore = (
           feedParams.likeWeight * post.likes +
           feedParams.commentWeight * post.comments +
@@ -532,10 +533,13 @@ const ExperimentRanking: React.FC = () => {
         const hoursOld = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
         const timeDecayFactor = Math.pow(feedParams.timeDecay, hoursOld / 24)
 
-        // Boost加分
+        // Like count > T 加分
+        const thresholdBonus = post.likes > feedParams.likeThreshold ? 500 : 0
+
+        // Boost加分 (额外加分)
         const boostScore = post.isBoosted ? 1000 : 0
 
-        return engagementScore * timeDecayFactor + boostScore
+        return (engagementScore * timeDecayFactor) + thresholdBonus + boostScore
       }
 
       return calculateScore(b) - calculateScore(a)
@@ -553,11 +557,139 @@ const ExperimentRanking: React.FC = () => {
       {/* Feed参数调整面板 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Feed Algorithm Parameters</h3>
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-700 font-mono">
+            Formula: <span className="font-bold">(a×like + b×comment + c×remix + d×watch%) × time_decay + (like_count &gt; T)</span>
+          </p>
+        </div>
         
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🔧</div>
-          <p className="text-lg text-gray-600 mb-2">Parameter Controls</p>
-          <p className="text-sm text-gray-500">Waiting for development...</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* a - Like Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              a (Like Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.likeWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                likeWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* b - Comment Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              b (Comment Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.commentWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                commentWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* c - Remix Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              c (Remix Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.remixWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                remixWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* d - Watch Weight */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              d (Watch % Weight)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={feedParams.watchWeight}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                watchWeight: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* Time Decay */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Time Decay
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={feedParams.timeDecay}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                timeDecay: parseFloat(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* T - Like Threshold */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              T (Like Threshold)
+            </label>
+            <input
+              type="number"
+              step="100"
+              value={feedParams.likeThreshold}
+              onChange={(e) => setFeedParams(prev => ({
+                ...prev,
+                likeThreshold: parseInt(e.target.value) || 0
+              }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={() => setFeedParams({
+              followingWeight: 40,
+              recentWeight: 20,
+              forYouWeight: 40,
+              likeWeight: 1.0,
+              commentWeight: 1.5,
+              remixWeight: 2.0,
+              watchWeight: 3.0,
+              timeDecay: 0.8,
+              likeThreshold: 1000,
+            })}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+          >
+            Reset to Default
+          </button>
+          <div className="text-sm text-gray-600 flex items-center">
+            <span className="mr-2">🔄</span>
+            Changes apply automatically to the feed below
+          </div>
         </div>
       </div>
 
@@ -660,7 +792,7 @@ const ExperimentRanking: React.FC = () => {
                                                  <div className="flex items-center space-x-3">
                            <video
                              src={post.videoUrl}
-                             className="w-12 h-20 object-cover rounded bg-gray-100"
+                             className="w-60 h-96 object-cover rounded bg-gray-100"
                              muted
                              playsInline
                            />
