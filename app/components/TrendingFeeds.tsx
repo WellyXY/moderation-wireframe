@@ -14,14 +14,21 @@ const TrendingFeeds: React.FC = () => {
     likeThreshold: 1000, // T: like count阈值
   })
 
-  // 内容标签过滤器 - 只支持Feature和Good
-  const [filterContentType, setFilterContentType] = useState('all')
+  // 内容标签过滤器 - Boost / Normal
+  const [filterContentType, setFilterContentType] = useState('boost')
 
   // 视图切换状态 (grid / list)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   // View Details 弹窗状态
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+
+  // 处理Boost/Deboost操作
+  const handleAction = (postId: string, action: 'boost' | 'deboost') => {
+    // 由于TrendingFeeds使用的是静态数据，这里只是示例
+    console.log(`${action} action for post:`, postId)
+    // 在实际应用中，这里应该调用API更新数据
+  }
 
   // 模拟测试Feed数据 - 只包含approved/blocked状态，没有pending和waiting_for_review
   const mockFeedPosts: Post[] = [
@@ -493,21 +500,18 @@ const TrendingFeeds: React.FC = () => {
     }
   ]
 
-  // 过滤和排序帖子 - 只显示Feature和Good内容，按算法评分排序
+  // 过滤和排序帖子 - 按Boost/Normal状态，按算法评分排序
   const filteredAndSortedPosts = useMemo(() => {
     return mockFeedPosts
       .filter(post => {
-        // 只显示boosted的内容(Feature和Good)
-        if (!post.isBoosted) return false
-        
         // Content type过滤
         switch (filterContentType) {
-          case 'feature':
-            return post.boostType === 'feature'
-          case 'good':
-            return post.boostType === 'good'
+          case 'boost':
+            return post.isBoosted
+          case 'normal':
+            return !post.isBoosted
           default:
-            return true // All content: 显示所有Feature和Good
+            return true
         }
       })
       .sort((a, b) => {
@@ -694,9 +698,8 @@ const TrendingFeeds: React.FC = () => {
               onChange={(e) => setFilterContentType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
-              <option value="all">All Trending</option>
-              <option value="feature">Boost</option>
-              <option value="good">Good</option>
+              <option value="boost">Boost</option>
+              <option value="normal">Normal</option>
             </select>
             
             {/* View Toggle */}
@@ -791,6 +794,8 @@ const TrendingFeeds: React.FC = () => {
                              className="w-60 h-96 object-cover rounded bg-gray-100"
                              muted
                              playsInline
+                             autoPlay
+                             loop
                            />
                           <div>
                             <div className="font-medium line-clamp-1">{post.username}</div>
@@ -813,7 +818,7 @@ const TrendingFeeds: React.FC = () => {
                         <div className="flex flex-wrap gap-1">
                           {post.isBoosted && (
                             <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs">
-                              {post.boostType === 'feature' ? '🚀 Boost' : '👍 Good'}
+                              🚀 Boost
                             </span>
                           )}
                           {post.status === 'approved' && (
@@ -946,12 +951,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
     
     if (post.isBoosted) {
       return (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center ${
-          post.boostType === 'feature' 
-            ? 'bg-purple-100 text-purple-800' 
-            : 'bg-green-100 text-green-800'
-        }`}>
-                          {post.boostType === 'feature' ? '🚀 Boost' : '👍 Good'}
+        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full flex items-center">
+          🚀 Boost
         </span>
       )
     }
@@ -1057,34 +1058,23 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, index, onSelectPost }) => {
             View Details
           </button>
           <div className="grid grid-cols-2 gap-1">
-            <button
-              className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded transition-colors"
-              title="Boost Good"
-              onClick={() => console.log('Boost Good for:', post.id)}
-            >
-              👍 Good
-            </button>
-            <button
-              className="px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs rounded transition-colors"
-              title="Boost Feature"
-              onClick={() => console.log('Boost Feature for:', post.id)}
-            >
-              ⭐ Feature
-            </button>
-            <button
-              className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors"
-              title="Approve"
-              onClick={() => console.log('Approve for:', post.id)}
-            >
-              ✓ Approve
-            </button>
-            <button
-              className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors"
-              title="Block"
-              onClick={() => console.log('Block for:', post.id)}
-            >
-              🚫 Block
-            </button>
+            {post.isBoosted ? (
+              <button
+                className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded transition-colors col-span-2"
+                title="Deboost"
+                onClick={() => handleAction(post.id, 'deboost')}
+              >
+                ⬇️ Deboost
+              </button>
+            ) : (
+              <button
+                className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded transition-colors col-span-2"
+                title="Boost"
+                onClick={() => handleAction(post.id, 'boost')}
+              >
+                ⬆️ Boost
+              </button>
+            )}
           </div>
         </div>
       </div>
