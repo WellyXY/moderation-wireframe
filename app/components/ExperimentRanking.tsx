@@ -657,18 +657,18 @@ const ExperimentRanking: React.FC = () => {
                     <tr key={post.id} className="hover:bg-gray-50">
                       <td className="border border-gray-200 px-2 py-1 font-medium">#{index + 1}</td>
                       <td className="border border-gray-200 px-2 py-1">
-                        <div className="flex items-center space-x-2">
-                          <video
-                            src={post.videoUrl}
-                            className="w-16 h-9 object-cover rounded bg-gray-100"
-                            muted
-                            playsInline
-                          />
-                          <div>
-                            <div className="font-medium line-clamp-1">{post.username}</div>
-                            <div className="text-gray-500 line-clamp-1">{post.content}</div>
-                          </div>
-                        </div>
+                                                 <div className="flex items-center space-x-3">
+                           <video
+                             src={post.videoUrl}
+                             className="w-12 h-20 object-cover rounded bg-gray-100"
+                             muted
+                             playsInline
+                           />
+                           <div>
+                             <div className="font-medium line-clamp-1">{post.username}</div>
+                             <div className="text-gray-500 line-clamp-1">{post.content}</div>
+                           </div>
+                         </div>
                       </td>
                       <td className="border border-gray-200 px-2 py-1 font-mono">{post.id.slice(0, 8)}...</td>
                       <td className="border border-gray-200 px-2 py-1 font-mono">{finalScore.toFixed(2)}</td>

@@ -7,6 +7,9 @@ const TrendingFeeds: React.FC = () => {
   // 内容标签过滤器 - 只支持Feature和Good
   const [filterContentType, setFilterContentType] = useState('all')
 
+  // 视图切换状态 (grid / list)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
   // View Details 弹窗状态
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
 
@@ -525,21 +528,139 @@ const TrendingFeeds: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm"
             >
               <option value="all">All Trending</option>
-              <option value="feature">Feature</option>
+              <option value="feature">Boost</option>
               <option value="good">Good</option>
             </select>
+            
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                📱 Grid
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                📊 List
+              </button>
+            </div>
+            
             <div className="text-sm text-gray-600 bg-orange-50 px-3 py-1 rounded-full">
               🔥 Trending Content
             </div>
           </div>
         </div>
 
-        {/* TV Wall Grid Layout - 和Content Management相同 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-          {filteredAndSortedPosts.map((post: Post, index: number) => (
-            <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} />
-          ))}
-        </div>
+        {/* View Content - Grid or List */}
+        {viewMode === 'grid' ? (
+          /* TV Wall Grid Layout */
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+            {filteredAndSortedPosts.map((post: Post, index: number) => (
+              <VideoCard key={post.id} post={post} index={index} onSelectPost={setSelectedPost} />
+            ))}
+          </div>
+        ) : (
+          /* List View - Algorithm Data Table */
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-200 text-xs">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Rank</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Video</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Post ID</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Boost Score</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Likes</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Like Rate</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Comments</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Comment Rate</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Remixes</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Remix Rate</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Watch %</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Boost Time</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Hours Since</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Status</th>
+                  <th className="border border-gray-200 px-2 py-1 text-left font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAndSortedPosts.map((post, index) => {
+                  // 计算统计数据 (专门为Trending内容优化)
+                  const hoursSince = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60)
+                  const boostHours = post.boostedAt ? (Date.now() - post.boostedAt.getTime()) / (1000 * 60 * 60) : 0
+                  const likeRate = post.likes / (post.likes + post.comments + post.remixes + 100) // 模拟计算
+                  const commentRate = post.comments / (post.likes + post.comments + post.remixes + 100)
+                  const remixRate = post.remixes / (post.likes + post.comments + post.remixes + 100)
+                  const boostScore = post.isBoosted ? 1000 + (post.likes * 0.5) : 0
+                  
+                  return (
+                    <tr key={post.id} className="hover:bg-gray-50">
+                      <td className="border border-gray-200 px-2 py-1 font-medium">#{index + 1}</td>
+                      <td className="border border-gray-200 px-2 py-1">
+                        <div className="flex items-center space-x-3">
+                          <video
+                            src={post.videoUrl}
+                            className="w-12 h-20 object-cover rounded bg-gray-100"
+                            muted
+                            playsInline
+                          />
+                          <div>
+                            <div className="font-medium line-clamp-1">{post.username}</div>
+                            <div className="text-gray-500 line-clamp-1">{post.content}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="border border-gray-200 px-2 py-1 font-mono">{post.id.slice(0, 8)}...</td>
+                      <td className="border border-gray-200 px-2 py-1 font-mono">{boostScore.toFixed(0)}</td>
+                      <td className="border border-gray-200 px-2 py-1">{post.likes.toLocaleString()}</td>
+                      <td className="border border-gray-200 px-2 py-1">{(likeRate * 100).toFixed(1)}%</td>
+                      <td className="border border-gray-200 px-2 py-1">{post.comments}</td>
+                      <td className="border border-gray-200 px-2 py-1">{(commentRate * 100).toFixed(1)}%</td>
+                      <td className="border border-gray-200 px-2 py-1">{post.remixes}</td>
+                      <td className="border border-gray-200 px-2 py-1">{(remixRate * 100).toFixed(1)}%</td>
+                      <td className="border border-gray-200 px-2 py-1">{post.watchPercentage}%</td>
+                      <td className="border border-gray-200 px-2 py-1">{post.boostedAt?.toLocaleString().split(',')[0] || 'N/A'}</td>
+                      <td className="border border-gray-200 px-2 py-1">{hoursSince.toFixed(1)}h</td>
+                      <td className="border border-gray-200 px-2 py-1">
+                        <div className="flex flex-wrap gap-1">
+                          {post.isBoosted && (
+                            <span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded text-xs">
+                              {post.boostType === 'feature' ? '🚀 Boost' : '👍 Good'}
+                            </span>
+                          )}
+                          {post.status === 'approved' && (
+                            <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded text-xs">✓ Approved</span>
+                          )}
+                          {post.isBlocked && (
+                            <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded text-xs">❌ Blocked</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="border border-gray-200 px-2 py-1">
+                        <button
+                          onClick={() => setSelectedPost(post)}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Detail Modal */}
