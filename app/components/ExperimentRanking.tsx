@@ -3,7 +3,22 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { Post } from '../types'
 
-const ExperimentRanking: React.FC = () => {
+interface ExperimentRankingProps {
+  currentUserId?: string
+}
+
+const ExperimentRanking: React.FC<ExperimentRankingProps> = ({ currentUserId }) => {
+  // 用户ID输入状态
+  const [inputUserId, setInputUserId] = useState(currentUserId || '')
+  const [appliedUserId, setAppliedUserId] = useState(currentUserId || '')
+
+  // 应用用户ID变更
+  const handleApplyUserId = () => {
+    setAppliedUserId(inputUserId)
+    // 这里可以添加其他逻辑，比如重新加载数据等
+    console.log('Applied User ID:', inputUserId)
+  }
+
   // Feed算法参数 (输入状态)
   const [feedParams, setFeedParams] = useState({
     followingWeight: 40, // Following权重 (%)
@@ -615,6 +630,41 @@ const ExperimentRanking: React.FC = () => {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">For You</h2>
         <p className="text-gray-600">Personalized content feed with algorithm optimization</p>
+      </div>
+
+      {/* User Configuration */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">User Configuration</h3>
+        <div className="flex items-end gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Target User ID
+            </label>
+            <input
+              type="text"
+              value={inputUserId}
+              onChange={(e) => setInputUserId(e.target.value)}
+              placeholder="Enter user ID to test"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <button
+              onClick={handleApplyUserId}
+              disabled={!inputUserId.trim()}
+              className="px-6 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              Apply User
+            </button>
+          </div>
+        </div>
+        {appliedUserId && appliedUserId !== currentUserId && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700">
+              <span className="font-medium">Applied User:</span> {appliedUserId}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Feed参数调整面板 */}
