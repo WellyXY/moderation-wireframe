@@ -64,4 +64,28 @@ export interface ModerationAction {
   reason: string;
   moderatorId: string;
   timestamp: Date;
+}
+
+export interface LookItem {
+  rank: number;
+  postId: string;
+  title?: string;
+}
+
+export interface SoundItem {
+  rank: number;
+  soundId: string;
+  coverUrl?: string;
+  author?: string;
+  name?: string;
+  durationSec?: number;
+  remixCount?: number;
+}
+
+export interface SoundMeta {
+  id: string;
+  coverUrl: string;
+  author: string;
+  name: string;
+  durationSec: number;
 } 
