@@ -580,25 +580,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction, onE
             View Details
           </button>
           
-          {/* Explore Action Button */}
+          {/* Explore Action Button - Always shows "Add to Explore" for repeated tagging */}
           <div className="mb-1">
-            {post.exploreFlag ? (
-              <button
-                className="w-full px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs rounded transition-colors flex items-center justify-center"
-                title="Remove from Explore"
-                onClick={() => onExploreAction(post.id, 'remove')}
-              >
-                🔍 In Explore
-              </button>
-            ) : (
-              <button
-                className="w-full px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors flex items-center justify-center"
-                title="Add to Explore"
-                onClick={() => onExploreAction(post.id, 'add')}
-              >
-                🔍 Add to Explore
-              </button>
-            )}
+            <button
+              className="w-full px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors flex items-center justify-center"
+              title="Add to Explore (Repeatable)"
+              onClick={() => onExploreAction(post.id, 'add')}
+            >
+              🔍 Add to Explore
+            </button>
           </div>
           
           <div className="grid grid-cols-2 gap-1">
@@ -810,6 +800,13 @@ export default function ContentManagement() {
     }))
   }
 
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setTimeout(() => setToastMessage(null), 3000) // Hide after 3 seconds
+  }
+
   const handleExploreAction = (postId: string, action: 'add' | 'remove') => {
     setPosts(prev => prev.map(post => {
       if (post.id === postId) {
@@ -823,6 +820,10 @@ export default function ContentManagement() {
               post.remixes * 0.2 + 
               post.watchPercentage * 0.1
             )
+            
+            // Show success toast
+            showToast(`Content "${post.id}" added to Explore successfully!`)
+            
             return {
               ...post,
               exploreFlag: true,
@@ -830,6 +831,7 @@ export default function ContentManagement() {
               originalScore: originalScore
             }
           case 'remove':
+            showToast(`Content "${post.id}" removed from Explore!`)
             return { 
               ...post, 
               exploreFlag: false,
@@ -1070,6 +1072,16 @@ export default function ContentManagement() {
           <VideoCard key={post.id} post={post} onSelectPost={setSelectedPost} onAction={handleAction} onExploreAction={handleExploreAction} />
         ))}
       </div>
+
+      {/* Success Toast */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg slide-up">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">✅</span>
+            <span className="font-medium">{toastMessage}</span>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedPost && (
