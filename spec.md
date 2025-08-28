@@ -4,6 +4,27 @@
 
 This feature adds an "Explore" content curation system to the existing moderation platform, allowing administrators to promote specific content with time-based weighting decay.
 
+## User Story & Requirements Discussion
+
+**Q: What does the Explore Page do?**
+A: It's a manually curated content feed where moderators can handpick the best content to showcase. Think of it like a "featured" or "editor's choice" section.
+
+**Q: How do moderators add content to Explore?**
+A: On the Content Management page, there's an "Add to Explore" button for each post. Click it, and that content gets tagged for the Explore feed.
+
+**Q: How is content ranked on the Explore Page?**
+A: We use a smart ranking algorithm that considers both content quality (remix count) and freshness. New content gets a massive boost (5x) that gradually decays over 7 days, then everyone competes fairly.
+
+**Q: What's the ranking formula?**
+A: `ranking_score = LN(1 + remix_count) × 10 × time_boost`
+Where time_boost starts at 5.0x for new content and decays to 1.0x after 7 days using exponential decay.
+
+**Q: How does the Explore Page work for users?**
+A: It shows all manually tagged content sorted by ranking score. Videos autoplay in the list, and it's an infinite scroll that loops back to the beginning when you reach the end.
+
+**Q: Can moderators remove content from Explore?**
+A: Yes, there's a "Remove" button on each item in the Explore Page that removes the manual tag.
+
 ## Feature Requirements
 
 ### 1. Content Management Page Enhancement
