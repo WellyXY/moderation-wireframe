@@ -11,7 +11,8 @@ const menuItems = [
   { id: 'content', label: 'Content Management', icon: '📹' },
   { id: 'experiment', label: 'For You', icon: '🧪' },
   { id: 'trending', label: 'Trending Feeds', icon: '🔥' },
-  { id: 'discover', label: 'Discover Page', icon: '🧭' },
+  // { id: 'discover', label: 'Discover Page', icon: '🧭' }, // Hidden as requested
+  { id: 'explore', label: 'Explore Page', icon: '🔍' },
 ]
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {

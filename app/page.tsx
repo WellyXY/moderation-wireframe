@@ -7,6 +7,7 @@ import ContentManagement from './components/ContentManagement'
 import ExperimentRanking from './components/ExperimentRanking'
 import TrendingFeeds from './components/TrendingFeeds'
 import DiscoverPage from './components/DiscoverPage'
+import ExplorePage from './components/ExplorePage'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('content')
@@ -29,6 +30,7 @@ export default function Home() {
           {activeTab === 'experiment' && <ExperimentRanking currentUserId={currentUser?.userId} />}
           {activeTab === 'trending' && <TrendingFeeds currentUserId={currentUser?.userId} />}
           {activeTab === 'discover' && <DiscoverPage />}
+          {activeTab === 'explore' && <ExplorePage />}
         </main>
       </div>
     </div>

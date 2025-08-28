@@ -25,6 +25,10 @@ export interface Post {
   jobId: string;
   editLookId: string;
   videoPrompt: string;
+  // Explore functionality
+  exploreFlag?: boolean;
+  exploreFlaggedAt?: Date;
+  originalScore?: number;
 }
 
 export interface StreamConfig {

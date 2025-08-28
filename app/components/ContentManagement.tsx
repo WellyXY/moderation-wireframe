@@ -438,9 +438,10 @@ interface VideoCardProps {
   post: Post
   onSelectPost: (post: Post) => void
   onAction: (postId: string, action: 'boost' | 'deboost') => void
+  onExploreAction: (postId: string, action: 'add' | 'remove') => void
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction, onExploreAction }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -578,6 +579,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ post, onSelectPost, onAction }) =
           >
             View Details
           </button>
+          
+          {/* Explore Action Button */}
+          <div className="mb-1">
+            {post.exploreFlag ? (
+              <button
+                className="w-full px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs rounded transition-colors flex items-center justify-center"
+                title="Remove from Explore"
+                onClick={() => onExploreAction(post.id, 'remove')}
+              >
+                🔍 In Explore
+              </button>
+            ) : (
+              <button
+                className="w-full px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded transition-colors flex items-center justify-center"
+                title="Add to Explore"
+                onClick={() => onExploreAction(post.id, 'add')}
+              >
+                🔍 Add to Explore
+              </button>
+            )}
+          </div>
+          
           <div className="grid grid-cols-2 gap-1">
             {post.isBoosted ? (
               <button
@@ -778,6 +801,40 @@ export default function ContentManagement() {
               boostType: undefined,
               boostedAt: undefined,
               boostExpiry: undefined
+            }
+          default:
+            return post
+        }
+      }
+      return post
+    }))
+  }
+
+  const handleExploreAction = (postId: string, action: 'add' | 'remove') => {
+    setPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        const now = new Date()
+        switch (action) {
+          case 'add':
+            // Calculate original score based on engagement metrics
+            const originalScore = Math.round(
+              post.likes * 0.3 + 
+              post.comments * 0.4 + 
+              post.remixes * 0.2 + 
+              post.watchPercentage * 0.1
+            )
+            return {
+              ...post,
+              exploreFlag: true,
+              exploreFlaggedAt: now,
+              originalScore: originalScore
+            }
+          case 'remove':
+            return { 
+              ...post, 
+              exploreFlag: false,
+              exploreFlaggedAt: undefined,
+              originalScore: undefined
             }
           default:
             return post
@@ -1010,7 +1067,7 @@ export default function ContentManagement() {
       {/* TV Wall Grid Layout - Optimized for 9:16 videos */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
         {filteredAndSortedPosts.map((post: Post) => (
-          <VideoCard key={post.id} post={post} onSelectPost={setSelectedPost} onAction={handleAction} />
+          <VideoCard key={post.id} post={post} onSelectPost={setSelectedPost} onAction={handleAction} onExploreAction={handleExploreAction} />
         ))}
       </div>
 
